@@ -27,7 +27,8 @@ public class Servicio {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer idServicio;
 	private double precio;
-	private String nombre, descripcion;
+	private String nombre;
+    private String descripcion;
 	
 	@Lob
 	@Column(name = "img", columnDefinition = "LONGBLOB")

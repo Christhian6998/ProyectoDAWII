@@ -41,10 +41,10 @@ public class ServicioController {
             @RequestParam String nombre,
             @RequestParam String descripcion,
             @RequestParam Double precio,
-            //@RequestParam Long usuarioId,
+            @RequestParam Long usuarioId,
             @RequestParam(required = false) MultipartFile img) throws IOException {
 
-        ServicioResponseDTO servicio = servicioService.crearServicio(nombre, descripcion, precio,  img);
+        ServicioResponseDTO servicio = servicioService.crearServicio(nombre, descripcion, precio,usuarioId,img);
         return ResponseEntity.status(HttpStatus.CREATED).body(servicio);
     }
     // Modif repas
@@ -54,10 +54,10 @@ public class ServicioController {
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String descripcion,
             @RequestParam(required = false) Double precio,
-           // @RequestParam(required = false) Long usuarioId,
+            @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) MultipartFile img) throws IOException {
 
-        ServicioResponseDTO servicio = servicioService.actualizarServicio(id, nombre, descripcion, precio, img);
+        ServicioResponseDTO servicio = servicioService.actualizarServicio(id, nombre, descripcion, precio,usuarioId, img);
         return ResponseEntity.ok(servicio);
     }
 
