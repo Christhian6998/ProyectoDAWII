@@ -3,7 +3,6 @@ package org.cibertec.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -15,7 +14,6 @@ import org.cibertec.entity.DetalleProducto;
 import org.cibertec.entity.DetalleServicio;
 import org.cibertec.entity.Mascota;
 import org.cibertec.entity.Orden;
-import org.cibertec.entity.Producto;
 import org.cibertec.entity.Servicio;
 import org.cibertec.entity.Usuario;
 import org.cibertec.service.DetalleOrdenService;
