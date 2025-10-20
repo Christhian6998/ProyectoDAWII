@@ -15,7 +15,6 @@ public class ServicioRequestDTO {
     private String nombre;
     private String descripcion;
 
-    // comentado temporalmente
-    // private Long idUsuario;
+    private Long idUsuario;
 
 }

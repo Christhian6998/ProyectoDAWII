@@ -3,10 +3,11 @@ package org.cibertec.service;
 import lombok.RequiredArgsConstructor;
 import org.cibertec.dto.ServicioRequestDTO;
 import org.cibertec.dto.ServicioResponseDTO;
-import org.cibertec.entity.Mascota;
 import org.cibertec.entity.Servicio;
+import org.cibertec.entity.Usuario;
 import org.cibertec.mapper.ServicioMapper;
 import org.cibertec.repository.IServicioRepository;
+import org.cibertec.repository.IUsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +19,7 @@ import java.util.List;
 public class ServicioService {
     private final IServicioRepository servicioRepository;
     private final ServicioMapper servicioMapper;
+    private final IUsuarioRepository usuarioRepository;
 
 
     public List<ServicioResponseDTO> listarServicio() {
@@ -37,8 +39,10 @@ public class ServicioService {
             String nombre,
             String descripcion,
             Double precio,
-           // Long usuarioId,
+            Long usuarioId,
             MultipartFile img) throws IOException {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("No se encontro el usuario con id: " + usuarioId));
 
         ServicioRequestDTO request = ServicioRequestDTO.builder()
                 .nombre(nombre)
@@ -47,7 +51,7 @@ public class ServicioService {
                 .build();
 
         byte[] imgBytes = img != null ? img.getBytes() : null;
-        Servicio servicio = servicioMapper.toEntity(request, imgBytes);
+        Servicio servicio = servicioMapper.toEntity(request,imgBytes ,usuario);
         Servicio guardado = servicioRepository.save(servicio);
         return servicioMapper.toDto(guardado);
     }
@@ -58,8 +62,10 @@ public class ServicioService {
             String nombre,
             String descripcion,
             Double precio,
-           // Long usuarioId,
+            Long usuarioId,
             MultipartFile img) throws IOException {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("No se encontro el usuario con id: " + usuarioId));
 
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
@@ -68,7 +74,7 @@ public class ServicioService {
         if (nombre != null) servicio.setNombre(nombre);
         if (descripcion != null) servicio.setDescripcion(descripcion);
         if (precio != null) servicio.setPrecio(precio);
-        //if (usuarioId != null) servicio.setUsuarioId(usuarioId);
+        if (usuarioId != null) servicio.setUsuario(usuario);
         if (img != null && !img.isEmpty()) {
             servicio.setImg(img.getBytes());
         }
@@ -76,7 +82,6 @@ public class ServicioService {
         Servicio actualizado = servicioRepository.save(servicio);
         return servicioMapper.toDto(actualizado);
     }
-
 
         public void eliminarServicio(Integer id) {
             if(!servicioRepository.existsById(id)) {
