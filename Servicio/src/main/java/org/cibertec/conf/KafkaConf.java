@@ -1,4 +1,4 @@
-package com.cibertec.email.conf;
+package org.cibertec.conf;
 
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -9,13 +9,9 @@ import org.springframework.kafka.core.KafkaAdmin;
 
 import java.util.HashMap;
 import java.util.Map;
-
 @Configuration
 public class KafkaConf {
     @Value("${app.topic.name}")
-    private String topicName;
-
-    @Value("servicio-notification")
     private String servitopicName;
 
     @Value("${spring.kafka.bootstrap-servers}")
@@ -29,12 +25,7 @@ public class KafkaConf {
     }
 
     @Bean
-    NewTopic productoTopic() {
-        return new NewTopic(topicName, 1, (short) 1);
-    }
-
-    @Bean
-    NewTopic servicioTopic() {
-        return new NewTopic(servitopicName, 1, (short) 1);
-    }
+   NewTopic servicioTopic() {
+      return new NewTopic(servitopicName, 1, (short) 1);
+   }
 }

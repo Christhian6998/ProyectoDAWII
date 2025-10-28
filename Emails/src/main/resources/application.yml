@@ -1,14 +1,5 @@
 spring:
   application:
-    name: email-service
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: producto-notification-consumers
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-app:
-  topic:
-    name: producto-notification
+    name: Emails
+  config:
+    import: configserver:http://localhost:8888

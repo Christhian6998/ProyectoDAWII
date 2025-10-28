@@ -54,10 +54,9 @@ public class ServicioController {
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String descripcion,
             @RequestParam(required = false) Double precio,
-            @RequestParam(required = false) Long usuarioId,
             @RequestParam(required = false) MultipartFile img) throws IOException {
 
-        ServicioResponseDTO servicio = servicioService.actualizarServicio(id, nombre, descripcion, precio,usuarioId, img);
+        ServicioResponseDTO servicio = servicioService.actualizarServicio(id, nombre, descripcion, precio, img);
         return ResponseEntity.ok(servicio);
     }
 
@@ -77,4 +76,9 @@ public class ServicioController {
                 .contentType(MediaType.IMAGE_JPEG) // Ajusta si usas PNG, etc.
                 .body(img);
     }
+
+    @GetMapping("/usuario/{idUsuario}")
+    public ResponseEntity<List<ServicioResponseDTO>> listarServiciosPorVeterinario(@PathVariable Long idUsuario) {
+        List<ServicioResponseDTO> servicios = servicioService.listarServiciosPorVeterinario(idUsuario);
+        return ResponseEntity.ok(servicios);}
 }

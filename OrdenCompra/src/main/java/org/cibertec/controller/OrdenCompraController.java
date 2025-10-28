@@ -2,7 +2,9 @@ package org.cibertec.controller;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -14,11 +16,13 @@ import org.cibertec.entity.DetalleProducto;
 import org.cibertec.entity.DetalleServicio;
 import org.cibertec.entity.Mascota;
 import org.cibertec.entity.Orden;
+import org.cibertec.entity.Producto;
 import org.cibertec.entity.Servicio;
 import org.cibertec.entity.Usuario;
 import org.cibertec.service.DetalleOrdenService;
 import org.cibertec.service.OrdenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -119,90 +123,168 @@ public class OrdenCompraController {
 	}
 	
 	
-	@PostMapping("/procesar")
-	public ResponseEntity<?> procesarOrden(@RequestHeader(name = "Authorization", required = false) String token,
-    		@RequestBody List<DetalleDto> detalles) {
+	@PostMapping("/procesarCarrito")
+	public ResponseEntity<?> procesarOrdenCarrito(@RequestHeader(name = "Authorization", required = false) String token,
+	        @RequestParam Long idUsuario) {
 
-		if (token == null || !token.startsWith("Bearer ")) {
-		    return new ResponseEntity<>("Token de autorización (Authorization token) requerido.", HttpStatus.UNAUTHORIZED);
-		}
-		if (detalles.isEmpty() || Objects.isNull(detalles.get(0).getIdUsuario())) {
-            return new ResponseEntity<>("La lista de detalles o el ID de usuario está vacío (Details list or User ID is empty).", HttpStatus.BAD_REQUEST);
-        }
-		
-		Usuario usuario=new Usuario();
-		usuario.setIdUsuario(detalles.get(0).getIdUsuario());
-		
-		Orden orden = new Orden();
-		orden.setFecha(new Date());
-		orden.setUsuario(usuario);
-		
-		Orden ordenGuardada = oSer.guardar(orden);
-		
-		double total= 0.0;
-		
-		for (DetalleDto detalle : detalles) {
-		    
-			if (Objects.nonNull(detalle.getIdServicio())) {
-			    
-				if (Objects.isNull(detalle.getIdUsuario()) || Objects.isNull(detalle.getIdMascota()) || Objects.isNull(detalle.getFechaCita())) {
-					return new ResponseEntity<>("Datos incompletos para la Cita (Incomplete data for the Appointment).", HttpStatus.BAD_REQUEST);
-				}
-				
-				DetalleServicio ds = new DetalleServicio();
-				
-				Servicio servicio = new Servicio();
-                servicio.setIdServicio(detalle.getIdServicio());
-                
-                Mascota mascota = new Mascota();
-                mascota.setIdMascota(detalle.getIdMascota());
-				
-				ds.setOrden(ordenGuardada);
-				ds.setNombre(detalle.getNombre());
-				ds.setPrecio(detalle.getPrecio());
-				ds.setTotal(detalle.getTotal());
-				ds.setComision(detalle.getTotal() * 0.15);
-				ds.setFechaCita(detalle.getFechaCita());
-				ds.setServicio(servicio);
-				ds.setMascota(mascota);
-				
-				DetalleOrden detalleGuardado=detOrdSer.guardar(ds);
-				
-				try {
-					ResponseEntity<DetalleDto> citaResponse = servCitCli.nuevaCita(token, detalle.getIdUsuario(), 
-						detalle.getIdServicio(), detalle.getIdMascota(), detalle.getFechaCita());
-					
-					if (!citaResponse.getStatusCode().is2xxSuccessful()) {
-						detOrdSer.eliminar(detalleGuardado.getIdDetalle());
-                        oSer.eliminar(ordenGuardada.getNumeroOrden());
-					    return new ResponseEntity<>("Error al registrar la cita (Error registering the appointment): " + citaResponse.getStatusCode(), citaResponse.getStatusCode());
-					}
-					total += detalle.getTotal();
-				
-				} catch (Exception e) {
-					detOrdSer.eliminar(detalleGuardado.getIdDetalle());
-                    oSer.eliminar(ordenGuardada.getNumeroOrden());
-					return new ResponseEntity<>("Fallo en la comunicación (Communication failed) con ServicioCita: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-				}
-			
-			} /*else if (Objects.nonNull(detalle.getIdProducto())) {
-				
-				// --- ES UN PRODUCTO ---
-				// Consumir Stock usando el servicio local (Consume Stock using the local service)
-				try {
-					detalleOrdenService.consumirStockProductos(List.of(detalle)); // Llama al Feign Client ProductoClient internamente
-				     // Aquí también iría el guardado del DetalleOrden
-				} catch (Exception e) {
-					return new ResponseEntity<>("Fallo al consumir stock (Failed to consume stock): " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-				}
-			}*/
-		}
-		
-		ordenGuardada.setTotal(total);
-        ordenGuardada.setComisionTotal(total * 0.15);
-        oSer.guardar(ordenGuardada);
-		return new ResponseEntity<>("Orden No. " + ordenGuardada.getNumeroOrden() + " creada y procesada exitosamente.", HttpStatus.CREATED);
+	    if (token == null || !token.startsWith("Bearer ")) {
+	        return new ResponseEntity<>("Token requerido.", HttpStatus.UNAUTHORIZED);
+	    }
+
+	    List<DetalleDto> detalles;
+	    try {
+	        detalles = detOrdSer.carritoPorUsuario(token, idUsuario);
+	    } catch (Exception e) {
+	        return new ResponseEntity<>("Error al obtener carrito: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
+
+	    if (detalles.isEmpty()) {
+	        return new ResponseEntity<>("El carrito está vacío.", HttpStatus.BAD_REQUEST);
+	    }
+	    
+	    if (detalles == null || detalles.isEmpty()) {
+	        return new ResponseEntity<>("El carrito está vacío o no se pudo obtener.", HttpStatus.BAD_REQUEST);
+	    }
+
+	    return procesarDetalles(idUsuario,detalles, token);
 	}
+	
+	@PostMapping("/procesarCita")
+	public ResponseEntity<?> procesarOrdenCita(@RequestHeader(name = "Authorization", required = false) String token,
+	        @RequestParam Long idUsuario, @RequestParam Integer idServicio,
+	        @RequestParam Long idMascota, @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") Date fechaCita) {
+
+	    if (token == null || !token.startsWith("Bearer ")) {
+	        return new ResponseEntity<>("Token requerido.", HttpStatus.UNAUTHORIZED);
+	    }
+
+	    DetalleDto detalle;
+	    try {
+	        detalle = detOrdSer.citaPorUsuario(token, idUsuario, idServicio, idMascota, fechaCita);
+	    } catch (Exception e) {
+	        return new ResponseEntity<>("Error al obtener cita: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
+	    
+	    if (detalle == null) {
+	        return new ResponseEntity<>("No se encontró la cita o los datos están incompletos.", HttpStatus.BAD_REQUEST);
+	    }
+
+	    return procesarDetalles(idUsuario,List.of(detalle), token);
+	}
+	
+	
+	private ResponseEntity<?> procesarDetalles(Long idUsuario,List<DetalleDto> detalles, String token) {
+		
+		List<DetalleDto> detallesValidos = detalles.stream()
+	            .filter(d -> d.getIdProducto() != null || d.getIdServicio() != null)
+	            .toList();
+
+	    if (detallesValidos.isEmpty()) {
+	        return new ResponseEntity<>("No hay detalles válidos para procesar.", HttpStatus.BAD_REQUEST);
+	    }
+		
+		Usuario usuario = new Usuario();
+	    usuario.setIdUsuario(idUsuario);
+
+	    Orden orden = new Orden();
+	    orden.setFecha(new Date());
+	    orden.setUsuario(usuario);
+
+	    double total = detalles.stream().mapToDouble(DetalleDto::getTotal).sum();
+	    orden.setTotal(total);
+	    orden.setComisionTotal(total * 0.15);
+
+	    Orden ordenGuardada = oSer.guardar(orden);
+
+	    List<Integer> detallesGuardados = new ArrayList<>();
+	    List<Map<String, Integer>> productosProcesados = new ArrayList<>();
+
+	    try {
+	        for (DetalleDto detalle : detalles) {
+	            if (detalle.getIdServicio() != null) {
+	            	try {
+	            		DetalleServicio ds = new DetalleServicio();
+		                ds.setOrden(ordenGuardada);
+		                ds.setNombre(detalle.getNombre());
+		                ds.setPrecio(detalle.getPrecio());
+		                ds.setTotal(detalle.getTotal());
+		                ds.setComision(detalle.getTotal() * 0.15);
+		                ds.setFechaCita(detalle.getFechaCita());
+	
+		                Servicio servicio = new Servicio();
+		                servicio.setIdServicio(detalle.getIdServicio());
+		                ds.setServicio(servicio);
+	
+		                Mascota mascota = new Mascota();
+		                mascota.setIdMascota(detalle.getIdMascota());
+		                ds.setMascota(mascota);
+	
+		                DetalleOrden guardado = detOrdSer.guardar(ds);
+		                detallesGuardados.add(guardado.getIdDetalle());
+	            	}catch (Exception e) {
+	            		System.err.println("Error guardando servicio: " + e.getMessage());
+	            	}
+	                
+
+	            } else if (detalle.getIdProducto() != null) {
+	            	
+	            	try {
+	                    detOrdSer.eliminarProductoCarrito(token, idUsuario, detalle.getIdProducto());
+	                } catch (Exception e) {
+	                    throw new RuntimeException("Error al eliminar producto del carrito (ID: " + detalle.getIdProducto()+"-" +idUsuario+ "): " + e.getMessage());
+	                }
+	            	try {
+						Producto producto = new Producto();
+		                producto.setIdProducto(detalle.getIdProducto());
+	
+		                DetalleProducto dp = new DetalleProducto();
+		                dp.setOrden(ordenGuardada);
+		                dp.setNombre(detalle.getNombre());
+		                dp.setPrecio(detalle.getPrecio());
+		                dp.setTotal(detalle.getTotal());
+		                dp.setCantidad(detalle.getCantidad());
+		                dp.setProducto(producto);
+		                dp.setComision(detalle.getTotal() * 0.15);
+	
+		                DetalleOrden guardado = detOrdSer.guardar(dp);
+		                detallesGuardados.add(guardado.getIdDetalle());
+					} catch (Exception e) {
+						System.err.println("Error guardando producto: " + e.getMessage());
+					}
+	            	
+	                try {
+						Map<String, Integer> productoInfo = new HashMap<>();
+		                productoInfo.put("idProducto", detalle.getIdProducto());
+		                productoInfo.put("cantidad", detalle.getCantidad());
+		                productosProcesados.add(productoInfo);
+					} catch (Exception e) {
+						System.err.println("Error consumiendo stock: " + e.getMessage());
+					}
+
+	                
+	            }
+	        }
+
+	        for (Map<String, Integer> producto : productosProcesados) {
+	            detOrdSer.consumirStockProductos(
+	                producto.get("idProducto"),
+	                producto.get("cantidad")
+	            );
+	        }
+	        return new ResponseEntity<>(
+	                "Orden No. " + ordenGuardada.getNumeroOrden() + " creada exitosamente.",
+	                HttpStatus.CREATED
+	        );
+
+	    } catch (Exception e) {
+	        for (Integer idDetalle : detallesGuardados) detOrdSer.eliminar(idDetalle);
+	        oSer.eliminar(ordenGuardada.getNumeroOrden());
+	        return new ResponseEntity<>("Error al procesar la orden: " + e.getMessage(),
+	                HttpStatus.INTERNAL_SERVER_ERROR);
+	    }
+
+	}
+
 	
 	
 	

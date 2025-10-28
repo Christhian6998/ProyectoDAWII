@@ -7,6 +7,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "Producto", url="http://localhost:8080/producto")
 public interface ProductoClient {
-	@PutMapping("producto/actualizar/stock")
-    ResponseEntity<String> actualizarStockProducto(@RequestParam("id") int idProducto,@RequestParam int cantidad);
+	@PutMapping("producto/actualizar/restarStock")
+	ResponseEntity<String> restarStockProductoPorID(@RequestParam int id,@RequestParam int stock);
 }

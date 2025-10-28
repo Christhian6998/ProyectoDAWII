@@ -2,6 +2,7 @@ package com.cibertec.email.service;
 
 import com.cibertec.email.client.IUsuarioClient;
 import com.cibertec.email.dto.ProductoRequestDTO;
+import com.cibertec.email.dto.ServicioRequestDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.cibertec.entity.Usuario;
@@ -35,5 +36,32 @@ public class EmailKafkaSuscriberService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    // Servicio
+
+    @KafkaListener(topics = "servicio-notification", groupId = "${spring.kafka.consumer.group-id}")
+    public void Escuchar(String mesage) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+
+            ServicioRequestDTO servicio = mapper.readValue(mesage, ServicioRequestDTO.class);
+            // Obtener usuario por idUsuario
+            Usuario usuario = usuarioClient.getById(servicio.getIdUsuario());
+
+            System.out.println(">>>>>>>>>>> Nuevo Mensaje >>>>>>>>>>");
+            System.out.println("Asunto: Nuevo servicio de " + usuario.getUsername());
+            System.out.println("Destinatario: " + usuario.getCorreo());
+            System.out.println("Cuerpo:");
+            System.out.println(">> Hola, " + usuario.getUsername() + " se agrego nuevo servicio a su catálogo!");
+            System.out.println(">> Servicio: " + servicio.getNombre());
+            System.out.println(">> Descripcion: " + servicio.getDescripcion());
+            System.out.println(">> Precio: " + servicio.getPrecio());
+            System.out.println("\nEnviando correo Electronico...\n");
+
+        } catch (Exception e) { // Mejor que JsonProcessingException solo
+            System.err.println("Error procesando mensaje de Kafka: " + mesage);
+            e.printStackTrace(); // O loguea adecuadamente
+        }
     }
 }

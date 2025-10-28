@@ -20,7 +20,7 @@ public class ServicioService {
     private final IServicioRepository servicioRepository;
     private final ServicioMapper servicioMapper;
     private final IUsuarioRepository usuarioRepository;
-
+private final KafkaPublisherService kafkaPublisherService;
 
     public List<ServicioResponseDTO> listarServicio() {
         return servicioRepository.findAll().stream()
@@ -48,11 +48,13 @@ public class ServicioService {
                 .nombre(nombre)
                 .descripcion(descripcion)
                 .precio(precio)
+                .idUsuario(usuarioId)
                 .build();
 
         byte[] imgBytes = img != null ? img.getBytes() : null;
         Servicio servicio = servicioMapper.toEntity(request,imgBytes ,usuario);
         Servicio guardado = servicioRepository.save(servicio);
+        kafkaPublisherService.enviarMensageKafka(request);
         return servicioMapper.toDto(guardado);
     }
 
@@ -62,10 +64,7 @@ public class ServicioService {
             String nombre,
             String descripcion,
             Double precio,
-            Long usuarioId,
             MultipartFile img) throws IOException {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("No se encontro el usuario con id: " + usuarioId));
 
         Servicio servicio = servicioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Servicio no encontrado"));
@@ -74,7 +73,6 @@ public class ServicioService {
         if (nombre != null) servicio.setNombre(nombre);
         if (descripcion != null) servicio.setDescripcion(descripcion);
         if (precio != null) servicio.setPrecio(precio);
-        if (usuarioId != null) servicio.setUsuario(usuario);
         if (img != null && !img.isEmpty()) {
             servicio.setImg(img.getBytes());
         }
@@ -96,5 +94,11 @@ public class ServicioService {
                 .map(Servicio::getImg)
                 .orElse(null);
         }
+
+    public List<ServicioResponseDTO> listarServiciosPorVeterinario(Long usuarioId) {
+        return servicioRepository.findByUsuarioIdUsuario(usuarioId).stream()
+                .map(servicioMapper::toDto)
+                .toList();
+    }
     }
 
