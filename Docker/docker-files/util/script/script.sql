@@ -19,7 +19,7 @@
 -- Table structure for table `carrito`
 --
 
-create database vetmarket;
+CREATE DATABASE IF NOT EXISTS vetmarket;
 use vetmarket;
 
 DROP TABLE IF EXISTS `carrito`;
