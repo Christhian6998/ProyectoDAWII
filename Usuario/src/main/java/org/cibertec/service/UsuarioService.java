@@ -169,17 +169,52 @@ public class UsuarioService {
 
 	public List<Usuario> fallbackListarTodos(Throwable ex) {
         System.err.println("Fallback en listar todos los usuarios : " + ex.getMessage());
-        return List.of();
+        
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(0L);
+        usuario.setNombre("No se encontro usuarios");
+        usuario.setApellido("");
+        usuario.setNumeroDocumento("");
+        usuario.setTelefono("");
+        usuario.setDireccion("");
+        usuario.setCorreo("");
+        usuario.setRuc("");
+        
+        return List.of(usuario);
     }
     
 	public Usuario fallbackBuscarPorId(Long id, Throwable ex) {
         System.err.println("Fallback en buscar usuario por id="+id + ": "+ ex.getMessage());
-        return new Usuario();
+        
+        
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(0L);
+        usuario.setNombre("No se encontro usuario con el id");
+        usuario.setApellido("");
+        usuario.setNumeroDocumento("");
+        usuario.setTelefono("");
+        usuario.setDireccion("");
+        usuario.setCorreo("");
+        usuario.setRuc("");
+        
+        
+        return usuario;
     }
     
 	public List<Usuario> fallbackBuscarPorRol(Long idRol, Throwable ex) {
         System.err.println("Fallback en buscar usuarios por rol id="+ idRol + ": "  + ex.getMessage());
-        return List.of();
+        
+        Usuario usuario = new Usuario();
+        usuario.setIdUsuario(0L);
+        usuario.setNombre("No se encontro usuarios con el rol");
+        usuario.setApellido("");
+        usuario.setNumeroDocumento("");
+        usuario.setTelefono("");
+        usuario.setDireccion("");
+        usuario.setCorreo("");
+        usuario.setRuc("");
+        
+        return List.of(usuario);
     }
     
 	public Usuario fallbackCrearUsuario(Usuario usuario, Throwable ex) throws Exception {
