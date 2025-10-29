@@ -1,0 +1,320 @@
+name: proyectoDAWII
+
+services:
+  # =====================
+  # BASE DE DATOS
+  # =====================
+  mysql:
+    image: mysql:latest
+    container_name: mysql-proyectoDAWII
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: sql
+      MYSQL_DATABASE: vetmarket
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./Docker/docker-files/util/script/script.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psql"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # KAFKA SERVER
+  # =====================
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      CLUSTER_ID: q1sh-9D8S1-dxkPz2JjD7Q
+    networks:
+      - proyectoDAWII
+
+
+  # =====================
+  # EUREKA SERVER
+  # =====================
+  eureka:
+    image: proyectoDAWII/eureka:1.0
+    container_name: eureka
+    build:
+      context: ./Eureka
+      dockerfile: Dockerfile
+    ports:
+      - "8762:8761"
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # CONFIG SERVER
+  # =====================
+  config-server:
+    image: proyectoDAWII/config-server:1.0
+    container_name: config-server
+    build:
+      context: ./Configuraciones
+      dockerfile: Dockerfile
+    ports:
+      - "8889:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      eureka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # API GATEWAY
+  # =====================
+  apigateway:
+    image: proyectoDAWII/apigateway:1.0
+    container_name: apigateway
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # AUTENTICACION
+  # =====================
+  autenticacion:
+    image: proyectoDAWII/autenticacion:1.0
+    container_name: autenticacion
+    build:
+      context: ./Autenticacion
+      dockerfile: Dockerfile
+    ports:
+      - "6008:6007"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # USUARIO
+  # =====================
+  usuario:
+    image: proyectoDAWII/usuario:1.0
+    container_name: usuario
+    build:
+      context: ./Usuario
+      dockerfile: Dockerfile
+    ports:
+      - "6014:6013"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # PRODUCTO
+  # =====================
+  producto:
+    image: proyectoDAWII/producto:1.0
+    container_name: producto
+    build:
+      context: .
+      dockerfile: ./Producto/Dockerfile
+    ports:
+      - "6016:6015"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # CARRITO COMPRA
+  # =====================
+  carritocompra:
+    image: proyectoDAWII/carritocompra:1.0
+    container_name: carritocompra
+    build:
+      context: .
+      dockerfile: ./CarritoCompra/Dockerfile
+    ports:
+      - "6006:6005"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # ORDEN COMPRA
+  # =====================
+  ordencompra:
+    image: proyectoDAWII/ordencompra:1.0
+    container_name: ordencompra
+    build:
+      context: ./OrdenCompra
+      dockerfile: Dockerfile
+    ports:
+      - "6001:6000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # SERVICIO
+  # =====================
+  servicio:
+    image: proyectoDAWII/servicio:1.0
+    container_name: servicio
+    build:
+      context: ./Servicio
+      dockerfile: Dockerfile
+    ports:
+      - "6012:6011"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # SERVICIO CITA
+  # =====================
+  serviciocita:
+    image: proyectoDAWII/serviciocita:1.0
+    container_name: serviciocita
+    build:
+      context: ./ServicioCita
+      dockerfile: Dockerfile
+    ports:
+      - "6003:6002"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # MASCOTA
+  # =====================
+  mascota:
+    image: proyectoDAWII/mascota:1.0
+    container_name: mascota
+    build:
+      context: ./Mascota
+      dockerfile: Dockerfile
+    ports:
+      - "6010:6009"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+  # =====================
+  # EMAILS (usa Kafka y Usuario)
+  # =====================
+  emails:
+    image: proyectoDAWII/emails:1.0
+    container_name: emails
+    build:
+      context: ./Emails
+      dockerfile: Dockerfile
+    ports:
+      - "6018:6017"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - proyectoDAWII
+
+# =====================
+# VOLUMENES
+# =====================
+volumes:
+  mysql-data:
+    driver: local
+
+# =====================
+# RED EXTERNA
+# =====================
+networks:
+  proyectoDAWII:
+    external: true

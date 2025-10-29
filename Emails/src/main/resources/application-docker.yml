@@ -2,9 +2,9 @@ spring:
   application:
     name: Emails
   config:
-    import: configserver:http://localhost:8888
+    import: configserver:http://config-server:8888
 
 server:
   port: 6017
 usuario:
-  url: http://localhost:8080
+  url: http://apigateway:8080

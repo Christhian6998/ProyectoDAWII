@@ -7,3 +7,6 @@ spring:
     config:
       label: docker
       profile: docker
+
+server:
+  port: 6015
