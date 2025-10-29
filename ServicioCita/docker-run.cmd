@@ -6,7 +6,7 @@ REM -f = indica el archivo Dockerfile a usar
 REM . = significa que está en la carpeta actual
 
 REM --- Ejecución del contenedor ---
-docker run -d --name serviciocita --network proyectoDAWII -p 6001:6000 proyectoDAWII/serviciocita:1.0
+docker run -d --name serviciocita --network proyectoDAWII -p 6003:6002 proyectoDAWII/serviciocita:1.0
 REM -d = ejecuta en segundo plano (modo detached)
 REM --name = nombre del contenedor
 REM --network = conecta el contenedor a una red Docker (para que se comunique con otros servicios)
