@@ -3,3 +3,5 @@ spring:
     name: Emails
   config:
     import: configserver:http://localhost:8888
+usuario:
+  url: http://localhost:8080
