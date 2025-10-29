@@ -6,3 +6,5 @@ spring:
 
 server:
   port: 6017
+usuario:
+  url: http://localhost:8080

@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "Usuario", url = "localhost:8080/usuario/usuario")
+@FeignClient(name = "Usuario", url = "${usuario.url}/usuario/usuario")
 public interface IUsuarioClient {
 
 	@GetMapping("/rol/{idRol}")
