@@ -55,6 +55,9 @@ public class CarritoController {
 		if (token == null || token.isEmpty() || !token.startsWith("Bearer ")) {
 	        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 	    }
+		if (cantidad<0) {
+	        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+	    }
 		
 	    CarritoCompra carrito = cSer.agregarProducto(idUsuario, idProducto, cantidad);
 	    return ResponseEntity.ok(carrito);

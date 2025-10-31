@@ -55,8 +55,8 @@ services:
     image: proyectoDAWII/eureka:1.0
     container_name: eureka
     build:
-      context: ./Eureka
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Eureka/Dockerfile
     ports:
       - "8762:8761"
     depends_on:
@@ -77,8 +77,8 @@ services:
     image: proyectoDAWII/config-server:1.0
     container_name: config-server
     build:
-      context: ./Configuraciones
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Configuraciones/Dockerfile
     ports:
       - "8889:8888"
     environment:
@@ -104,8 +104,8 @@ services:
     image: proyectoDAWII/apigateway:1.0
     container_name: apigateway
     build:
-      context: ./ApiGateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./ApiGateway/Dockerfile
     ports:
       - "8081:8080"
     depends_on:
@@ -123,8 +123,8 @@ services:
     image: proyectoDAWII/autenticacion:1.0
     container_name: autenticacion
     build:
-      context: ./Autenticacion
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Autenticacion/Dockerfile
     ports:
       - "6008:6007"
     depends_on:
@@ -144,8 +144,8 @@ services:
     image: proyectoDAWII/usuario:1.0
     container_name: usuario
     build:
-      context: ./Usuario
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Usuario/Dockerfile
     ports:
       - "6014:6013"
     depends_on:
@@ -207,8 +207,8 @@ services:
     image: proyectoDAWII/ordencompra:1.0
     container_name: ordencompra
     build:
-      context: ./OrdenCompra
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./OrdenCompra/Dockerfile
     ports:
       - "6001:6000"
     depends_on:
@@ -228,8 +228,8 @@ services:
     image: proyectoDAWII/servicio:1.0
     container_name: servicio
     build:
-      context: ./Servicio
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Servicio/Dockerfile
     ports:
       - "6012:6011"
     depends_on:
@@ -249,8 +249,8 @@ services:
     image: proyectoDAWII/serviciocita:1.0
     container_name: serviciocita
     build:
-      context: ./ServicioCita
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./ServicioCita/Dockerfile
     ports:
       - "6003:6002"
     depends_on:
@@ -270,8 +270,8 @@ services:
     image: proyectoDAWII/mascota:1.0
     container_name: mascota
     build:
-      context: ./Mascota
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Mascota/Dockerfile
     ports:
       - "6010:6009"
     depends_on:
@@ -291,8 +291,8 @@ services:
     image: proyectoDAWII/emails:1.0
     container_name: emails
     build:
-      context: ./Emails
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./Emails/Dockerfile
     ports:
       - "6018:6017"
     depends_on:
